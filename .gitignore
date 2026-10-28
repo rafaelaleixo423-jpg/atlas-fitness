@@ -1,0 +1,12 @@
+node_modules
+dist
+.vercel
+*.local
+.env
+.env.*
+.DS_Store
+Thumbs.db
+# Configuração local de ferramentas (contém caminhos da máquina)
+.claude/
+.vscode/
+*.log
