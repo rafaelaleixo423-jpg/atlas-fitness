@@ -9,6 +9,7 @@ import { TrialClass } from './components/TrialClass'
 import { Faq } from './components/Faq'
 import { Footer } from './components/Footer'
 import type { Interest } from './data/content'
+import { hashTargetId } from './lib/hash'
 import { initReveal } from './lib/reveal'
 
 export default function App() {
@@ -16,6 +17,13 @@ export default function App() {
   const [interest, setInterest] = useState<Interest | ''>('')
 
   useEffect(() => initReveal(), [])
+
+  // Ao chegar por um link com âncora (ex.: /#planos vindo da Política de Privacidade), o navegador
+  // tenta rolar antes de o React montar as seções; rola de novo agora que elas existem.
+  useEffect(() => {
+    const id = hashTargetId(window.location.hash)
+    if (id) document.getElementById(id)?.scrollIntoView({ behavior: 'instant' })
+  }, [])
 
   return (
     <>

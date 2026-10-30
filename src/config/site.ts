@@ -32,4 +32,14 @@ export const siteConfig = {
     authorName: '',
     authorUrl: '',
   },
+
+  /**
+   * Política de Privacidade (/privacidade/). Dados informados pelo responsável pelo projeto.
+   * Atualize `updatedAt` sempre que o texto ou o tratamento de dados mudar.
+   */
+  privacy: {
+    ownerName: 'Rafael Aleixo',
+    contactEmail: 'rafaelaleixo423@gmail.com',
+    updatedAt: '29 de outubro de 2026',
+  },
 } as const

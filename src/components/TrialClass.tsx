@@ -2,6 +2,7 @@ import { useId, useRef, useState, type FormEvent } from 'react'
 import { interests, trialSteps, TRIAL_SECTION_ID, type Interest } from '../data/content'
 import { photos } from '../lib/images'
 import { getWhatsAppUrl, isWhatsAppConfigured } from '../lib/whatsapp'
+import { PRIVACY_PATH } from './Footer'
 import { Icon } from './Icon'
 import { Photo, SectionHeading } from './ui'
 
@@ -211,7 +212,12 @@ export function TrialClass({ interest, onInterestChange }: Props) {
 
             <p id={`${uid}-privacy`} className="flex items-start gap-2 text-xs leading-relaxed text-ink-400">
               <Icon name="shield" className="mt-px size-4 shrink-0" />
-              Seus dados não são armazenados por este site.
+              <span>
+                Nada do que você digita aqui é enviado ou armazenado.{' '}
+                <a href={PRIVACY_PATH} className="underline underline-offset-2 hover:text-white">
+                  Política de Privacidade
+                </a>
+              </span>
             </p>
           </form>
         </div>

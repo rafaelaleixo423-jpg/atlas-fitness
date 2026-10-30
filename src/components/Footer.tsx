@@ -4,7 +4,16 @@ import { getWhatsAppUrl } from '../lib/whatsapp'
 import { Icon } from './Icon'
 import { Logo } from './ui'
 
-export function Footer() {
+export const PRIVACY_PATH = '/privacidade/'
+
+type FooterProps = {
+  /** Prefixo dos links de seção: '' na landing page, '/' em outras páginas. */
+  homeHref?: string
+  /** Destino de "Voltar ao topo" na página atual. */
+  topHref?: string
+}
+
+export function Footer({ homeHref = '', topHref = '#inicio' }: FooterProps) {
   const whatsappUrl = getWhatsAppUrl()
   const { authorName, authorUrl } = siteConfig.portfolio
 
@@ -16,7 +25,7 @@ export function Footer() {
           <p className="mt-5 max-w-xs leading-relaxed">
             Musculação, treino funcional e acompanhamento profissional para treinar com método e constância.
           </p>
-          <a href={`#${TRIAL_SECTION_ID}`} className="btn-primary mt-8 min-h-11 px-5 text-sm">
+          <a href={`${homeHref}#${TRIAL_SECTION_ID}`} className="btn-primary mt-8 min-h-11 px-5 text-sm">
             Aula experimental
           </a>
         </div>
@@ -26,7 +35,7 @@ export function Footer() {
           <ul className="mt-5 space-y-3">
             {navLinks.map((link) => (
               <li key={link.id}>
-                <a href={`#${link.id}`} className="transition-colors hover:text-white">
+                <a href={`${homeHref}#${link.id}`} className="transition-colors hover:text-white">
                   {link.label}
                 </a>
               </li>
@@ -82,7 +91,7 @@ export function Footer() {
             <span>
               <strong className="text-white">Projeto demonstrativo de portfólio.</strong> A Atlas Fitness é uma academia
               fictícia. Nomes, valores, endereço, horários e serviços são ilustrativos e não representam oferta comercial.
-              Nenhum dado é coletado por este site.
+              O formulário é demonstrativo: nada é enviado nem armazenado.
             </span>
           </p>
 
@@ -106,10 +115,15 @@ export function Footer() {
                 </>
               )}
             </p>
-            <a href="#inicio" className="inline-flex items-center gap-2 self-start hover:text-white sm:self-auto">
-              Voltar ao topo
-              <Icon name="arrowUp" className="size-4" />
-            </a>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <a href={PRIVACY_PATH} className="hover:text-white">
+                Política de Privacidade
+              </a>
+              <a href={topHref} className="inline-flex items-center gap-2 hover:text-white">
+                Voltar ao topo
+                <Icon name="arrowUp" className="size-4" />
+              </a>
+            </div>
           </div>
         </div>
       </div>
