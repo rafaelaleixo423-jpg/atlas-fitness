@@ -25,20 +25,43 @@ export default function App() {
     const target = id ? document.getElementById(id) : null
     if (!target) return
     target.scrollIntoView({ behavior: 'instant' })
+    const expectedTop = target.getBoundingClientRect().top
 
-    // Numa primeira visita as fontes da web chegam depois e encolhem o conteúdo acima (~55 px),
-    // escondendo a seção sob o cabeçalho. Realinha uma vez quando elas carregam, salvo se o
-    // visitante já interagiu com a página.
-    let interacted = false
-    const markInteraction = () => (interacted = true)
-    const events = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const
-    for (const e of events) window.addEventListener(e, markInteraction, { once: true, passive: true })
-    document.fonts.ready.then(() => {
-      if (!interacted) target.scrollIntoView({ behavior: 'instant' })
-    })
-    return () => {
-      for (const e of events) window.removeEventListener(e, markInteraction)
+    // Numa primeira visita o Chrome repete a rolagem nativa até a âncora logo após o evento `load`,
+    // com uma posição calculada antes de as fontes da web entrarem, deixando o título ~55 px sob o
+    // cabeçalho fixo (medido na prévia). A correção:
+    // - não escuta `scroll`: só reage a mudanças de layout e a checagens curtas após load + fontes;
+    // - só corrige desvios pequenos (até 150 px), nunca uma rolagem de verdade;
+    // - é cancelada por qualquer sinal de intenção do visitante.
+    const realign = () => {
+      const drift = Math.abs(target.getBoundingClientRect().top - expectedTop)
+      if (drift > 2 && drift < 150) target.scrollIntoView({ behavior: 'instant' })
     }
+    const observer = new ResizeObserver(realign)
+    const intentEvents = ['wheel', 'touchstart', 'keydown', 'pointerdown', 'click', 'focusin', 'hashchange'] as const
+    const timers: number[] = []
+    let stopped = false
+    const stop = () => {
+      stopped = true
+      observer.disconnect()
+      timers.forEach(clearTimeout)
+      window.removeEventListener('load', onLoaded)
+      for (const e of intentEvents) window.removeEventListener(e, stop, true)
+    }
+    const onLoaded = () => {
+      void document.fonts.ready.then(() => {
+        if (stopped) return
+        for (const delay of [0, 50, 150, 300, 600, 1000]) timers.push(window.setTimeout(realign, delay))
+        timers.push(window.setTimeout(stop, 1100))
+      })
+    }
+
+    timers.push(window.setTimeout(stop, 15000))
+    for (const e of intentEvents) window.addEventListener(e, stop, { capture: true, passive: true })
+    observer.observe(document.body)
+    if (document.readyState === 'complete') onLoaded()
+    else window.addEventListener('load', onLoaded, { once: true })
+    return stop
   }, [])
 
   return (
