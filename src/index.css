@@ -93,6 +93,14 @@
   }
 }
 
+/* Aviso para quem navega sem JavaScript (classe em vez de style inline, compatível com a CSP). */
+.noscript-message {
+  padding: 2rem;
+  color: #fff;
+  background: #0a0a0b;
+  font-family: sans-serif;
+}
+
 @keyframes reveal {
   from {
     opacity: 0;
