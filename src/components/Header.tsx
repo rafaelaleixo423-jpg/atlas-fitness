@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { navLinks, TRIAL_SECTION_ID } from '../data/content'
 import { Icon } from './Icon'
@@ -28,10 +28,19 @@ function useActiveSection(ids: readonly string[]) {
 // A hero entra na lista para limpar o destaque ao voltar ao topo.
 const sectionIds = ['inicio', ...navLinks.map((l) => l.id), TRIAL_SECTION_ID]
 
+/** Com o menu aberto, o que fica atrás dele (link de atalho, main, footer) não recebe foco nem é lido. */
+function setBackgroundInert(header: HTMLElement | null, inert: boolean) {
+  for (const el of header?.parentElement?.children ?? []) {
+    if (el !== header && el instanceof HTMLElement) el.inert = inert
+  }
+}
+
 export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const active = useActiveSection(sectionIds)
+  const headerRef = useRef<HTMLElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -40,37 +49,55 @@ export function Header() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Menu mobile: trava a rolagem, fecha com Esc e ao voltar para o layout desktop.
+  // Menu mobile: trava a rolagem e o conteúdo de fundo, fecha com Esc e ao voltar para o layout desktop.
   useEffect(() => {
     if (!open) return
+    const header = headerRef.current
     document.body.style.overflow = 'hidden'
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    setBackgroundInert(header, true)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setOpen(false)
+      menuButtonRef.current?.focus()
+    }
+    // `resize` além de `change`: nem todo ambiente dispara `change` ao cruzar o breakpoint,
+    // e o menu aberto no desktop deixaria a página travada e inerte.
     const media = window.matchMedia('(min-width: 1024px)')
     const onMedia = () => media.matches && setOpen(false)
+    onMedia()
     window.addEventListener('keydown', onKey)
+    window.addEventListener('resize', onMedia)
     media.addEventListener('change', onMedia)
     return () => {
       document.body.style.overflow = ''
+      setBackgroundInert(header, false)
       window.removeEventListener('keydown', onKey)
+      window.removeEventListener('resize', onMedia)
       media.removeEventListener('change', onMedia)
     }
   }, [open])
 
   // Com o menu aberto o body está travado, então a rolagem nativa da âncora falharia:
-  // fecha o menu de forma síncrona, libera a rolagem e navega explicitamente.
+  // fecha o menu de forma síncrona, libera a rolagem, navega e leva o foco ao destino.
   const close = (e: MouseEvent<HTMLAnchorElement>) => {
     if (!open) return
     e.preventDefault()
     const id = e.currentTarget.hash.slice(1)
     flushSync(() => setOpen(false))
     document.body.style.overflow = ''
-    document.getElementById(id)?.scrollIntoView()
+    setBackgroundInert(headerRef.current, false)
+    const target = document.getElementById(id)
+    if (!target) return
+    target.scrollIntoView()
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
+    target.focus({ preventScroll: true })
     history.pushState(null, '', `#${id}`)
   }
   const solid = scrolled || open
 
   return (
     <header
+      ref={headerRef}
       className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
         solid ? 'border-b border-white/10 bg-ink-950/90 backdrop-blur-md' : 'border-b border-transparent'
       }`}
@@ -105,10 +132,15 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <a href={`#${TRIAL_SECTION_ID}`} className="btn-primary hidden min-h-11 px-5 text-sm sm:inline-flex">
+          <a
+            href={`#${TRIAL_SECTION_ID}`}
+            onClick={close}
+            className="btn-primary hidden min-h-11 px-5 text-sm sm:inline-flex"
+          >
             Aula experimental
           </a>
           <button
+            ref={menuButtonRef}
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}

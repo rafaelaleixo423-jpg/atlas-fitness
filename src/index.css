@@ -42,6 +42,11 @@
     @apply bg-brand text-white;
   }
 
+  /* Seções que recebem foco ao navegar pelo menu (tabindex="-1") não ganham contorno. */
+  [tabindex='-1']:focus {
+    outline: none;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-brand-soft);
     outline-offset: 3px;
