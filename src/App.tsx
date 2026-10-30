@@ -22,7 +22,23 @@ export default function App() {
   // tenta rolar antes de o React montar as seções; rola de novo agora que elas existem.
   useEffect(() => {
     const id = hashTargetId(window.location.hash)
-    if (id) document.getElementById(id)?.scrollIntoView({ behavior: 'instant' })
+    const target = id ? document.getElementById(id) : null
+    if (!target) return
+    target.scrollIntoView({ behavior: 'instant' })
+
+    // Numa primeira visita as fontes da web chegam depois e encolhem o conteúdo acima (~55 px),
+    // escondendo a seção sob o cabeçalho. Realinha uma vez quando elas carregam, salvo se o
+    // visitante já interagiu com a página.
+    let interacted = false
+    const markInteraction = () => (interacted = true)
+    const events = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const
+    for (const e of events) window.addEventListener(e, markInteraction, { once: true, passive: true })
+    document.fonts.ready.then(() => {
+      if (!interacted) target.scrollIntoView({ behavior: 'instant' })
+    })
+    return () => {
+      for (const e of events) window.removeEventListener(e, markInteraction)
+    }
   }, [])
 
   return (
